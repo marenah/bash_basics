@@ -1,94 +1,91 @@
+import java.util.Scanner;
 
+public class Game {
 
+    // by Muhammad Marenah
 
+    private Player player;
+    private Map map;
+    private boolean isRunning;
+    private boolean gameOver;
 
-    import java.util.Scanner;
+    public Game(Player player, Map map) {
+        this.player = player;
+        this.map = map;
+        this.isRunning = true;
+        this.gameOver = false;
+    }
 
-    public class Game {
+    public void run() {
+        System.out.println("Welcome to the game, Madreign!”);
 
-        // Muhammad Marenah
-        private Map gameMap;
-        private Player player;
+                Scanner scanner = new Scanner(System.in);
 
-        public Game() {
-            // initialize the game map and player
-            gameMap = new Map();
-            player = new Player(100, 10, "Player", gameMap.getStartingRoom());
+        while (isRunning) {
+            Room currentRoom = player.getCurrentRoom();
 
-        }
+            // Print room description
+            System.out.println(currentRoom.getRoomDescription());
 
-        public void start() {
-            System.out.println("Welcome to the game, Madreign!”);
+            // Print available directions
+            System.out.println("Available directions: ");
+            String[] connections = currentRoom.getConnections();
+            String[] directionText = currentRoom.getDirectionText();
+            for (int i = 0; i < connections.length; i++) {
+                System.out.println(directionText[i] + ": " + connections[i]);
+            }
 
-                    Scanner scanner = new Scanner(System.in);
+            // Prompt user for input
+            System.out.print("Enter direction or command: ");
+            String input = scanner.nextLine();
 
-            while (player.getRemainingLives() > 0) {
-                System.out.println("You are currently in " + player.getCurrentRoom().getDescription());
-                System.out.println("What would you like to do?");
-                System.out.println("1. Move to another room");
-                System.out.println("2. Check inventory");
-                System.out.println("3. Use a consumable");
-                System.out.println("4. Quit game");
-
-                int choice = scanner.nextInt();
-
-                switch (choice) {
-                    case 1:
-                        // move to another room
-                        System.out.println("Which direction would you like to move in?");
-                        String direction = scanner.next();
-                        Room newRoom = gameMap.getAdjacentRoom(player.getCurrentRoom(), direction);
-                        if (newRoom != null) {
-                            player.setCurrentRoom(newRoom);
-                        } else {
-                            System.out.println("You can't move in that direction.");
-                        }
-                        break;
-                    case 2:
-                        // check inventory
-                        ArrayList<Item> inventory = player.getPlayerInventory();
-                        System.out.println("You have the following items in your inventory:");
-                        for (Item item : inventory) {
-                            System.out.println(item.getName());
-                        }
-                        break;
-                    case 3:
-                        // use a consumable
-                        ArrayList<Item> consumables = player.getConsumables();
-                        if (consumables.size() == 0) {
-                            System.out.println("You don't have any consumables.");
-                        } else {
-                            System.out.println("Which consumable would you like to use?");
-                            for (int i = 0; i < consumables.size(); i++) {
-                                System.out.println((i+1) + ". " + consumables.get(i).getName());
-                            }
-                            int consumableIndex = scanner.nextInt() - 1;
-                            Consumable consumable = (Consumable)consumables.get(consumableIndex);
-                            int healedAmount = consumable.getRemainingHP();
-                            player.setHitPoints(player.getHitPoints() + healedAmount);
-                            if (player.getHitPoints() > 100) {
-                                player.setHitPoints(100);
-                            }
-                            consumable.setRemainingHP(0);
-                            System.out.println("You used " + consumable.getName() + " and restored " + healedAmount + " HP.");
-                        }
-                        break;
-                    case 4:
-                        // quit game
-                        System.out.println("Thanks for playing!");
-                        System.exit(0);
-                    default:
-                        System.out.println("Invalid choice. Please choose again.");
-                        break;
+            // Check for commands
+            if (input.equalsIgnoreCase("inventory")) {
+                player.printInventory();
+            } else if (input.equalsIgnoreCase("quit")) {
+                isRunning = false;
+            } else {
+                // Try to move to new room
+                int direction = parseDirection(input);
+                if (direction != -1) {
+                    String roomID = connections[direction];
+                    Room newRoom = map.getRoomByID(roomID);
+                    if (newRoom != null) {
+                        player.setCurrentRoom(newRoom);
+                    } else {
+                        System.out.println("There is no room in that direction!");
+                    }
+                } else {
+                    System.out.println("Invalid direction or command!");
                 }
             }
 
-            System.out.println("You have run out of lives. Game over!");
-            System.exit(0);
+            // Check if game over
+            if (player.getHitPoints() <= 0 || gameOver) {
+                isRunning = false;
+                System.out.println("Game over!");
+            }
         }
 
-        public static void main(String[] args) {
-            Game game = new Game();
-            game.start();
-        }
+        scanner.close();
     }
+
+    private int parseDirection(String input) {
+        int direction = -1;
+        switch (input.toLowerCase()) {
+            case "north":
+                direction = 0;
+                break;
+            case "east":
+                direction = 1;
+                break;
+            case "south":
+                direction = 2;
+                break;
+            case "west":
+                direction = 3;
+                break;
+        }
+        return direction;
+    }
+}
